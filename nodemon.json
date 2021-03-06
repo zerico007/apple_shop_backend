@@ -1,0 +1,8 @@
+{
+    "env": {
+        "ATLAS_DB_PASSSWORD": "dawada1011",
+        "PORT": 5000,
+        "TOKEN_SECRET": "ASDKDCMIuuwwnxcif23bnlhf",
+        "REFRESH_TOKEN_SECRET": "ACVFJGIGEVGBV23rfkvkbjkgjkjd3"
+    }
+}
