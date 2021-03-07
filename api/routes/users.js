@@ -8,6 +8,10 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 
+router.get('/test', (req, res) => {
+    res.send('Testing');
+})
+
 router.get('/', (req, res, next) => {
     User.find().exec()
     .then(docs => {
