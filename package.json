@@ -16,7 +16,7 @@
   "author": "Bavin Edwards",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.0.0",
+    "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
@@ -33,5 +33,13 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.7"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zerico007/apple_shop_backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zerico007/apple_shop_backend/issues"
+  },
+  "homepage": "https://github.com/zerico007/apple_shop_backend#readme"
 }
