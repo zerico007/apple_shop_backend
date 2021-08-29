@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
       if (itemAlreadyInCart) {
         for (const item of existingCartItems) {
           if (item.product == product) {
-            item.quantity = +quantity;
+            item.quantity = item.quantity + +quantity;
           }
         }
       } else {
