@@ -101,6 +101,48 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.put("/update", async (req, res) => {
+  const { product, quantity } = req.body;
+  const { userId } = req.authInfo;
+  try {
+    const existingProduct = await Product.findById(product);
+    if (!existingProduct) {
+      return res.status(StatusCodes.BAD_REQUEST);
+    }
+    const existingCustomerCart = await Cart.findOne({ userId });
+    if (existingCustomerCart) {
+      const existingCartItems = existingCustomerCart.items;
+      const itemAlreadyInCart = existingCartItems.some(
+        (item) => item.product == product
+      );
+      if (itemAlreadyInCart) {
+        for (const item of existingCartItems) {
+          if (item.product == product) {
+            item.quantity = +quantity;
+          }
+        }
+      }
+
+      Cart.findOneAndUpdate(
+        { userId },
+        { items: existingCartItems },
+        { new: true },
+        (error, document) => {
+          if (error)
+            return res
+              .status(StatusCodes.INTERNAL_SERVER_ERROR)
+              .json({ message: "Unable to udpdate cart" });
+          return res.status(StatusCodes.OK).send(document);
+        }
+      );
+    }
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
+  }
+});
+
 router.put("/remove", async (req, res) => {
   const { product } = req.body;
   const { userId } = req.authInfo;
