@@ -6,7 +6,7 @@ const moment = require("moment");
 const generateToken = (payload) => {
   return new Promise((resolve) => {
     const token = jwt.sign(payload, process.env.TOKEN_SECRET, {
-      expiresIn: "5s",
+      expiresIn: "30min",
     });
     resolve(token);
   });
