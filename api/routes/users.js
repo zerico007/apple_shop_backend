@@ -35,7 +35,6 @@ router.get("/", (req, res, next) => {
 
 router.post("/signup", (req, res, next) => {
   const { email, password, username, role } = req.body;
-  //const hashedPassword = md5(password);
   User.findOne({ email })
     .exec()
     .then((result) => {
@@ -135,29 +134,35 @@ router.delete("/:userId", (req, res) => {
 });
 
 router.put("/:userId", (req, res) => {
-  const { newPassword, password, currentPassword } = req.body;
+  const { newPassword, currentPassword } = req.body;
   const { userId } = req.params;
-  console.log(currentPassword);
-  bcrypt
-    .compare(currentPassword, password)
-    .then((response) => {
-      if (!response) {
-        res
-          .status(401)
-          .json({ message: "Password is incorrect. Please try again." });
-        console.log("wrong password");
-      }
-      bcrypt.hash(newPassword, saltRounds).then((hash) => {
-        User.findByIdAndUpdate({ _id: userId }, { password: hash })
-          .exec()
-          .then((result) => {
-            res.status(204).json(result);
+  // find user by userId
+  User.findById(userId)
+    .exec()
+    .then((result) => {
+      // compare current password with the one in the db
+      bcrypt.compare(currentPassword, result.password).then((response) => {
+        // if they match, hash the new password and update the user
+        if (response) {
+          bcrypt.hash(newPassword, saltRounds).then((hash) => {
+            User.findByIdAndUpdate(userId, { password: hash })
+              .exec()
+              .then((result) => {
+                res.status(200).json({ message: "Password updated" });
+              })
+              .catch((err) => {
+                res.status(500).json({ message: err.message });
+                return reject(err);
+              });
           });
+        } else {
+          res.status(401).json({ message: "Password is incorrect" });
+        }
       });
     })
     .catch((err) => {
-      console.log(err.message);
       res.status(500).json({ message: err.message });
+      return reject(err);
     });
 });
 
