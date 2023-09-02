@@ -8,8 +8,9 @@ const {
   generateRefreshToken,
   decodeToken,
 } = require("../../auth");
-const bcrypt = require("bcrypt");
-const saltRounds = 10;
+var bcrypt = require("bcryptjs");
+
+var salt = bcrypt.genSaltSync(10);
 
 router.get("/", (req, res, next) => {
   User.find()
@@ -48,7 +49,11 @@ router.post("/signup", (req, res, next) => {
           },
         });
       } else {
-        bcrypt.hash(password, saltRounds).then((hash) => {
+        bcrypt.hash(password, salt, function (err, hash) {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            // return reject(err);
+          }
           const user = new User({
             _id: mongoose.Types.ObjectId(),
             email,
@@ -65,8 +70,8 @@ router.post("/signup", (req, res, next) => {
                 user: result.email,
               });
             })
-            .catch((err) => {
-              res.status(500).json({ error: err.message });
+            .catch((userSaveError) => {
+              res.status(500).json({ error: userSaveError.message });
               //return reject(err);
             });
         });
@@ -80,34 +85,43 @@ router.post("/signin", (req, res, next) => {
     .exec()
     .then((result) => {
       if (result) {
-        bcrypt.compare(password, result.password).then(async (response) => {
-          !response &&
-            res
-              .status(401)
-              .json({ message: "Password is incorrect. Please try again." });
+        bcrypt.compare(
+          password,
+          result.password,
+          async function (err, response) {
+            !response &&
+              res
+                .status(401)
+                .json({ message: "Password is incorrect. Please try again." });
 
-          const payload = {
-            userId: result._id,
-            email: result.email,
-            password: result.password,
-            username: result.username,
-            role: result.role,
-          };
-          const token = await generateToken(payload);
-          const refresh_token = await generateRefreshToken(payload);
-          const decodedRefreshToken = await decodeToken(refresh_token, true);
-          const { iat, exp } = decodedRefreshToken;
-          await RefreshTokenModel.add({
-            _id: token,
-            refresh_token,
-            issue_date: iat * 1000,
-            expiry_date: exp * 1000,
-          });
-          res.status(200).json({
-            message: "Successfully logged in",
-            token,
-          });
-        });
+            if (err) {
+              res.status(500).json({ error: err.message });
+              // return reject(err);
+            }
+
+            const payload = {
+              userId: result._id,
+              email: result.email,
+              password: result.password,
+              username: result.username,
+              role: result.role,
+            };
+            const token = await generateToken(payload);
+            const refresh_token = await generateRefreshToken(payload);
+            const decodedRefreshToken = await decodeToken(refresh_token, true);
+            const { iat, exp } = decodedRefreshToken;
+            await RefreshTokenModel.add({
+              _id: token,
+              refresh_token,
+              issue_date: iat * 1000,
+              expiry_date: exp * 1000,
+            });
+            res.status(200).json({
+              message: "Successfully logged in",
+              token,
+            });
+          }
+        );
       } else {
         res.status(404).json({ message: "User not found" });
       }
@@ -141,24 +155,32 @@ router.put("/:userId", (req, res) => {
     .exec()
     .then((result) => {
       // compare current password with the one in the db
-      bcrypt.compare(currentPassword, result.password).then((response) => {
-        // if they match, hash the new password and update the user
-        if (response) {
-          bcrypt.hash(newPassword, saltRounds).then((hash) => {
-            User.findByIdAndUpdate(userId, { password: hash })
-              .exec()
-              .then((result) => {
-                res.status(200).json({ message: "Password updated" });
-              })
-              .catch((err) => {
-                res.status(500).json({ message: err.message });
-                return reject(err);
-              });
-          });
-        } else {
-          res.status(401).json({ message: "Password is incorrect" });
+      bcrypt.compare(
+        currentPassword,
+        result.password,
+        function (err, response) {
+          if (err) {
+            res.status(500).json({ message: err.message });
+            // return reject(err);
+          }
+          // if they match, hash the new password and update the user
+          if (response) {
+            bcrypt.hash(newPassword, salt).then((hash) => {
+              User.findByIdAndUpdate(userId, { password: hash })
+                .exec()
+                .then((result) => {
+                  res.status(200).json({ message: "Password updated" });
+                })
+                .catch((err) => {
+                  res.status(500).json({ message: err.message });
+                  return reject(err);
+                });
+            });
+          } else {
+            res.status(401).json({ message: "Password is incorrect" });
+          }
         }
-      });
+      );
     })
     .catch((err) => {
       res.status(500).json({ message: err.message });
