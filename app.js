@@ -34,6 +34,10 @@ app.use("/uploads", express.static("uploads"));
 
 app.use(cors());
 
+app.get("/", (req, res) => {
+  res.send("You have reached the apple shop backend API");
+});
+
 // Routes to handle routing requests
 app.use("/api/products/", productRoutes);
 app.use("/api/orders/", orderRoutes);
