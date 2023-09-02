@@ -12,8 +12,16 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "index.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "index.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "uploads/$1"
     }
   ]
 }
